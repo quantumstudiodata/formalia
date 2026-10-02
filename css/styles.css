@@ -473,9 +473,14 @@ button.avatar:hover { transform: scale(1.05); }
 .q-row-estado.warn { color: var(--warn); }
 .q-row-estado.manual { color: var(--p3); }
 
-.add-q { position: relative; display: flex; justify-content: center; margin-top: 8px; }
-.btn-add { padding: 13px 22px; border-radius: 14px; border: 1px dashed rgba(109, 79, 176, 0.5); background: rgba(109, 79, 176, 0.06); color: #e9d5ff; width: 100%; }
-.btn-add:hover { background: rgba(109, 79, 176, 0.12); border-style: solid; box-shadow: 0 12px 30px -16px rgba(109, 79, 176, 0.8); }
+.add-q { position: relative; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.add-q-tile {
+  display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 6px; border-radius: 12px;
+  border: 1px dashed rgba(109, 79, 176, 0.45); background: rgba(109, 79, 176, 0.06); color: #e9d5ff;
+  font-size: 12.5px; font-weight: 700; transition: background 0.2s, border-color 0.2s;
+}
+.add-q-tile .ic { width: 14px; height: 14px; }
+.add-q-tile:hover { background: rgba(109, 79, 176, 0.12); border-style: solid; }
 .type-menu {
   position: absolute; bottom: calc(100% + 10px); left: 50%; width: min(520px, 100%); display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; padding: 8px; border-radius: 16px;
   background: rgba(22, 18, 36, 0.97); border: 1px solid var(--border-2); box-shadow: var(--shadow); backdrop-filter: blur(20px); z-index: 10;
@@ -659,6 +664,7 @@ button.avatar:hover { transform: scale(1.05); }
   .tab { padding: 8px 18px; }
   .q-toolbar .sw-label { display: none; }
   .q-row-meta { display: none; }
+  .add-q { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .choices.row { grid-template-columns: 1fr; }
   .pf-hero { padding: 26px 20px 22px; }
   .resp-detail-head { flex-wrap: wrap; }

@@ -1184,7 +1184,12 @@
         ${f.preguntas.length ? f.preguntas.map((p, i) => p.id === preguntaActiva ? tarjetaPregunta(p, i, f.preguntas.length) : filaPregunta(p, i)).join('') : `<div class="empty small"><p class="muted">Este formulario no tiene preguntas todavía.</p></div>`}
       </div>
       <div class="add-q">
-        <button type="button" class="btn btn-add" data-qa="menuTipos">${ic('plus')} Agregar pregunta</button>
+        <button type="button" class="add-q-tile" data-qa="agregar" data-tipo="unica">${ic('plus')} Única</button>
+        <button type="button" class="add-q-tile" data-qa="agregar" data-tipo="multiple">${ic('plus')} Múltiple</button>
+        <button type="button" class="add-q-tile" data-qa="agregar" data-tipo="vf">${ic('plus')} V/F</button>
+        <button type="button" class="add-q-tile" data-qa="agregar" data-tipo="corta">${ic('plus')} Texto</button>
+        <button type="button" class="add-q-tile" data-qa="agregar" data-tipo="puntoImagen">${ic('plus')} Imagen</button>
+        <button type="button" class="add-q-tile" data-qa="menuTipos">${ic('plus')} Más</button>
         <div class="type-menu" id="tipoMenu">
           ${gruposTipos().map(([g, tipos]) => `<p class="type-group">${g}</p>${tipos.map(([k, t]) => `<button type="button" class="type-opt" data-qa="agregar" data-tipo="${k}"><span class="tipo-ic">${ic(t.icono)}</span><span class="tipo-txt"><strong>${t.nombre}</strong><small>${DESC_TIPOS[k] || ''}</small></span></button>`).join('')}`).join('')}
         </div>
