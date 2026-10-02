@@ -1135,10 +1135,10 @@
           <span class="tb-sep"></span>
           <label class="btn btn-ghost btn-sm apoyo-btn" title="Agregar una imagen a esta pregunta">${ic('image')}<span>${p.apoyo && p.apoyo.imagen ? 'Cambiar imagen' : 'Imagen'}</span>
             <input type="file" accept="image/*" data-q="apoyoArchivo" hidden></label>
-          <button type="button" class="icon-btn" data-qa="subir" ${i === 0 ? 'disabled' : ''} aria-label="Subir">${ic('up')}</button>
-          <button type="button" class="icon-btn" data-qa="bajar" ${i === total - 1 ? 'disabled' : ''} aria-label="Bajar">${ic('down')}</button>
-          <button type="button" class="icon-btn" data-qa="duplicar" aria-label="Duplicar">${ic('copy')}</button>
-          <button type="button" class="icon-btn danger" data-qa="eliminar" aria-label="Eliminar">${ic('trash')}</button>
+          <button type="button" class="icon-btn sm" data-qa="subir" ${i === 0 ? 'disabled' : ''} aria-label="Subir">${ic('up')}</button>
+          <button type="button" class="icon-btn sm" data-qa="bajar" ${i === total - 1 ? 'disabled' : ''} aria-label="Bajar">${ic('down')}</button>
+          <button type="button" class="tb-item" data-qa="duplicar">${ic('copy')}<span>Duplicar</span></button>
+          <button type="button" class="tb-item danger" data-qa="eliminar">${ic('trash')}<span>Eliminar</span></button>
         </div>
       </article>`;
   }
