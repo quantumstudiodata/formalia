@@ -163,12 +163,13 @@
   // Logo de Formalia (se pinta con el color del texto, así sirve en temas claros y oscuros).
   const logo = (tam = '') => `<div class="brand ${tam}"><span class="brand-logo" role="img" aria-label="${esc(window.CONFIG.NOMBRE)}"></span></div>`;
 
-  function topbar() {
+  function topbar(conCrear = false) {
     const u = Sesion.usuario() || {};
     return `
       <header class="topbar">
         <a href="#/formularios" class="brand-link">${logo()}</a>
         <div class="topbar-right">
+          ${conCrear ? `<button type="button" class="btn btn-primary btn-sm" data-crear="formulario">${ic('plus')} Crear</button>` : ''}
           ${API.modoDemo ? '<span class="chip chip-demo" title="Configura Supabase en js/config.js">Modo demo</span>' : ''}
           <div class="user-menu">
             <button class="avatar" id="avatarBtn" aria-label="Cuenta">${esc(iniciales(u.nombre))}</button>
@@ -528,19 +529,24 @@
     const u = Sesion.usuario();
     filtroForms = 'todos';
     app.innerHTML = `
-      ${topbar()}
+      ${topbar(true)}
       <main class="container">
         <section class="hero-banner">
           <div class="hb-text">
             <p class="eyebrow">Tu espacio</p>
             <h1>Hola, <span class="grad-text">${esc(String(u.nombre).split(' ')[0])}</span>. Crea evaluaciones que se califican solas.</h1>
-            <p class="muted">Empieza desde cero o retoma un formulario. La foca se encarga de calificar.</p>
-            <div class="hb-acciones">
-              <button type="button" class="btn btn-primary" data-crear="formulario">${ic('plus')} Nuevo formulario</button>
-              <span class="chip soon-chip">${ic('book')} Contenido · Próximamente</span>
-            </div>
+            <p class="muted">Empieza con una plantilla o desde cero. La foca se encarga del resto.</p>
           </div>
           <div class="hb-mascota" aria-hidden="true"><img src="img/foca2.png" alt=""></div>
+        </section>
+        <section>
+          <div class="section-head"><h2>Empieza con una plantilla</h2></div>
+          <div class="tpl-grid">
+            <button type="button" class="tpl-tile tpl-blanco" data-crear="formulario"><span class="tpl-plus">${ic('plus')}</span>En blanco</button>
+            <button type="button" class="tpl-tile tpl-examen" data-crear="examen">${ic('award')}<strong>Examen rápido</strong></button>
+            <button type="button" class="tpl-tile tpl-cuestionario" data-crear="cuestionario">${ic('list')}<strong>Cuestionario</strong></button>
+            <div class="tpl-tile tpl-soon" aria-disabled="true">${ic('book')}<strong>Contenido</strong><span class="chip">Próximamente</span></div>
+          </div>
         </section>
         <section>
           <div class="section-head">
@@ -667,10 +673,10 @@
     btn.disabled = true;
     btn.classList.add('loading');
     const form = {
-      titulo: 'Formulario sin título',
+      titulo: tipo === 'examen' ? 'Examen sin título' : 'Formulario sin título',
       descripcion: '',
-      config: Object.assign({}, CONFIG_BASE),
-      preguntas: [nuevaPregunta('unica')]
+      config: Object.assign({}, CONFIG_BASE, tipo === 'examen' ? { esExamen: true } : {}),
+      preguntas: [nuevaPregunta(tipo === 'cuestionario' ? 'multiple' : 'unica')]
     };
     try {
       const creado = await API.call('saveForm', { form });
@@ -732,7 +738,13 @@
     ed.sucio = false;
     if (E === ed) setEstado('Guardando…', 'saving');
     ed.guardando = API.call('saveForm', { form: ed.form })
-      .then(() => { if (!ed.sucio && E === ed) setEstado('Guardado', 'ok'); })
+      .then(() => {
+        if (!ed.sucio && E === ed) {
+          setEstado('Guardado', 'ok');
+          const ifr = $('#livePreview');
+          if (ifr && ed.tab === 'preguntas') ifr.src = `${ligaPublica(ed.form.id)}?preview=1&_=${Date.now()}`;
+        }
+      })
       .catch((err) => {
         ed.sucio = true;
         if (E === ed) setEstado('No se pudo guardar', 'err');
@@ -794,7 +806,7 @@
           <button class="btn btn-primary" id="btnCompartir">${ic('share')}<span>Compartir</span></button>
         </div>
       </header>
-      <main class="container narrow editor ${tab === 'diseno' ? 'wide' : ''}" id="editorBody"></main>`;
+      <main class="container narrow editor ${tab === 'diseno' || tab === 'preguntas' ? 'wide' : ''}" id="editorBody"></main>`;
 
     $('#btnCompartir').addEventListener('click', async () => {
       await guardarSiHayCambios();
@@ -1137,6 +1149,8 @@
     const cuerpo = $('#editorBody');
     const scroll = window.scrollY;
     cuerpo.innerHTML = `
+      <div class="q-layout">
+      <div class="q-main">
       <section class="q-card header-card con-tema" id="headerCard">
         <div class="hc-tamanos" role="group" aria-label="Tamaño del texto del encabezado">
           ${[['tamTitulo', 'Título'], ['tamDescripcion', 'Descripción']].map(([k, n]) => `
@@ -1162,6 +1176,14 @@
         <div class="type-menu" id="tipoMenu">
           ${gruposTipos().map(([g, tipos]) => `<p class="type-group">${g}</p>${tipos.map(([k, t]) => `<button type="button" class="type-opt" data-qa="agregar" data-tipo="${k}"><span class="tipo-ic">${ic(t.icono)}</span><span class="tipo-txt"><strong>${t.nombre}</strong><small>${DESC_TIPOS[k] || ''}</small></span></button>`).join('')}`).join('')}
         </div>
+      </div>
+      </div>
+      <aside class="q-preview" aria-label="Vista previa en vivo">
+        <p class="q-preview-label">Vista en vivo</p>
+        <div class="q-phone">
+          <iframe id="livePreview" title="Vista previa del formulario" src="${esc(ligaPublica(f.id))}?preview=1"></iframe>
+        </div>
+      </aside>
       </div>`;
     $$('textarea', cuerpo).forEach(autoAltura);
     aplicarTemaEncabezado();
