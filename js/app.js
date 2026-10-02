@@ -168,6 +168,11 @@
     return `
       <header class="topbar">
         <a href="#/formularios" class="brand-link">${logo()}</a>
+        ${conCrear ? `<nav class="topbar-nav" aria-label="Principal">
+          <a href="#/formularios" class="active">Inicio</a>
+          <button type="button" data-ir="plantillas">Plantillas</button>
+          <button type="button" data-ir="misformularios">Resultados</button>
+        </nav>` : ''}
         <div class="topbar-right">
           ${conCrear ? `<button type="button" class="btn btn-primary btn-sm" data-crear="formulario">${ic('plus')} Crear</button>` : ''}
           ${API.modoDemo ? '<span class="chip chip-demo" title="Configura Supabase en js/config.js">Modo demo</span>' : ''}
@@ -539,16 +544,17 @@
           </div>
           <div class="hb-mascota" aria-hidden="true"><img src="img/foca2.png" alt=""></div>
         </section>
-        <section>
+        <section id="plantillas">
           <div class="section-head"><h2>Empieza con una plantilla</h2></div>
           <div class="tpl-grid">
             <button type="button" class="tpl-tile tpl-blanco" data-crear="formulario"><span class="tpl-plus">${ic('plus')}</span>En blanco</button>
             <button type="button" class="tpl-tile tpl-examen" data-crear="examen">${ic('award')}<strong>Examen rápido</strong></button>
-            <button type="button" class="tpl-tile tpl-cuestionario" data-crear="cuestionario">${ic('list')}<strong>Cuestionario</strong></button>
-            <div class="tpl-tile tpl-soon" aria-disabled="true">${ic('book')}<strong>Contenido</strong><span class="chip">Próximamente</span></div>
+            <button type="button" class="tpl-tile tpl-cuestionario" data-crear="cuestionario">${ic('list')}<strong>Quiz con imágenes</strong></button>
+            <button type="button" class="tpl-tile tpl-encuesta" data-crear="encuesta">${ic('chart')}<strong>Encuesta de satisfacción</strong></button>
+            <button type="button" class="tpl-tile tpl-pasos" data-crear="pasos">${ic('list')}<strong>Evaluación paso a paso</strong></button>
           </div>
         </section>
-        <section>
+        <section id="misformularios">
           <div class="section-head">
             <h2>Mis formularios</h2>
             <div class="tabs-filtro" role="group" aria-label="Filtrar formularios">
@@ -564,6 +570,7 @@
     enlazarTopbar();
 
     $$('[data-crear]').forEach((b) => b.addEventListener('click', () => crearForm(b.dataset.crear, b)));
+    $$('[data-ir]').forEach((b) => b.addEventListener('click', () => $(`#${b.dataset.ir}`).scrollIntoView({ behavior: 'smooth', block: 'start' })));
     avisoVersion();
     $('#buscar').addEventListener('input', pintarLista);
     $$('[data-filtro]').forEach((b) => b.addEventListener('click', () => {
@@ -672,11 +679,13 @@
   async function crearForm(tipo, btn) {
     btn.disabled = true;
     btn.classList.add('loading');
+    const PRIMERA_PREGUNTA = { cuestionario: 'multiple', encuesta: 'escala' };
     const form = {
       titulo: tipo === 'examen' ? 'Examen sin título' : 'Formulario sin título',
       descripcion: '',
       config: Object.assign({}, CONFIG_BASE, tipo === 'examen' ? { esExamen: true } : {}),
-      preguntas: [nuevaPregunta(tipo === 'cuestionario' ? 'multiple' : 'unica')]
+      preguntas: [nuevaPregunta(PRIMERA_PREGUNTA[tipo] || 'unica')],
+      ...(tipo === 'pasos' ? { diseno: { composicion: 'pasos' } } : {})
     };
     try {
       const creado = await API.call('saveForm', { form });
@@ -1085,8 +1094,7 @@
             ${ok ? '<span class="chip chip-ok">Correcta</span>' : ''}
             ${p.tipo !== 'vf' && p.opciones.length > 1 ? `<button type="button" class="icon-btn sm" data-qa="quitarOpcion" aria-label="Quitar opción">${ic('x')}</button>` : ''}
           </div>`;
-      }).join('')}</div>
-      ${p.tipo !== 'vf' ? `<button type="button" class="link-btn" data-qa="agregarOpcion">${ic('plus')} Agregar opción</button>` : ''}`;
+      }).join('')}${p.tipo !== 'vf' ? `<button type="button" class="opt opt-add" data-qa="agregarOpcion">${ic('plus')} Opción</button>` : ''}</div>`;
     } else if (Tipos.es(p.tipo)) {
       cuerpo = Tipos.editor(p, examen);
     } else if (p.tipo === 'corta') {
@@ -1099,8 +1107,8 @@
     }
     return `
       <article class="q-card q-activa" data-qid="${esc(p.id)}" style="--i:${i}">
-        <div class="q-top-mini"><span class="q-num">${i + 1}</span></div>
         ${p.apoyo && p.apoyo.imagen ? `
+          <div class="q-top-mini"><span class="q-num">${i + 1}</span></div>
           <div class="q-enunciado ${p.apoyo.posicion === 'lado' ? 'lado' : 'arriba'}">
             <figure class="apoyo-edit">
               <img src="${p.apoyo.imagen}" alt="Imagen de la pregunta">
@@ -1113,7 +1121,11 @@
               </figcaption>
             </figure>
             <div class="q-text rt" contenteditable="true" data-q="texto" data-placeholder="${esc(PLACEHOLDER_TIPO[p.tipo] || 'Escribe la pregunta')}" aria-label="Enunciado de la pregunta">${textoRico(p.textoHtml, p.texto)}</div>
-          </div>` : `<div class="q-text rt" contenteditable="true" data-q="texto" data-placeholder="${esc(PLACEHOLDER_TIPO[p.tipo] || 'Escribe la pregunta')}" aria-label="Enunciado de la pregunta">${textoRico(p.textoHtml, p.texto)}</div>`}
+          </div>` : `
+          <div class="q-head-inline">
+            <span class="q-num">${i + 1}</span>
+            <div class="q-text rt" contenteditable="true" data-q="texto" data-placeholder="${esc(PLACEHOLDER_TIPO[p.tipo] || 'Escribe la pregunta')}" aria-label="Enunciado de la pregunta">${textoRico(p.textoHtml, p.texto)}</div>
+          </div>`}
         <div class="q-body">${cuerpo}</div>
         <div class="q-aviso-row"><span class="q-aviso">${avisoPregunta(p)}</span></div>
         <div class="q-toolbar" role="toolbar" aria-label="Herramientas de la pregunta">

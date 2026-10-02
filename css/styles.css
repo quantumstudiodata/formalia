@@ -214,7 +214,11 @@ p { margin: 0; }
   position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 16px;
   padding: 12px 28px; background: rgba(7, 6, 13, 0.72); backdrop-filter: blur(18px) saturate(1.4); border-bottom: 1px solid var(--border);
 }
-.topbar-right { display: flex; align-items: center; gap: 12px; }
+.topbar-nav { display: flex; align-items: center; gap: 22px; margin-left: 28px; font-size: 14px; font-weight: 600; }
+.topbar-nav a, .topbar-nav button { color: var(--muted); background: none; border: 0; padding: 4px 0; border-bottom: 2px solid transparent; }
+.topbar-nav a:hover, .topbar-nav button:hover { color: var(--text); }
+.topbar-nav a.active { color: #fff; border-bottom-color: var(--p3); }
+.topbar-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
 .brand-link { transition: opacity 0.2s; }
 .brand-link:hover { opacity: 0.85; }
 .container { max-width: 1120px; margin: 0 auto; padding: 30px 28px 72px; }
@@ -272,9 +276,9 @@ button.avatar:hover { transform: scale(1.05); }
 .tpl-blanco:hover { border-color: rgba(109, 79, 176, 0.8); background: rgba(109, 79, 176, 0.12); }
 .tpl-plus { width: 26px; height: 26px; }
 .tpl-examen { background: linear-gradient(135deg, #7c2d12, #9d174d); }
-.tpl-cuestionario { background: linear-gradient(135deg, #1e1b4b, #4c1d95); }
-.tpl-soon { color: var(--dim); cursor: default; background: var(--surface); }
-.tpl-soon .chip { align-self: flex-start; margin-top: 2px; }
+.tpl-cuestionario { background: linear-gradient(135deg, #0c4a6e, #1e3a8a); }
+.tpl-encuesta { background: linear-gradient(135deg, #064e3b, #115e59); }
+.tpl-pasos { background: linear-gradient(135deg, #2e1a47, #4c1d95); }
 
 .section-head { display: flex; align-items: center; justify-content: space-between; gap: 16px 20px; margin-bottom: 18px; flex-wrap: wrap; }
 .section-head h2 { font-size: 17px; margin-right: auto; }
@@ -376,6 +380,7 @@ button.avatar:hover { transform: scale(1.05); }
 
 .q-top-mini { margin-bottom: 10px; }
 .q-num { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; font-size: 13px; font-weight: 700; background: var(--grad-soft); border: 1px solid rgba(109, 79, 176, 0.35); color: #e9d5ff; flex-shrink: 0; }
+.q-activa .q-num { background: var(--grad); border-color: transparent; color: #fff; }
 .select { position: relative; display: inline-flex; align-items: center; gap: 8px; padding: 0 12px; border-radius: 10px; background: rgba(0, 0, 0, 0.35); border: 1px solid var(--border); transition: border-color 0.2s; }
 .select:hover, .select:focus-within { border-color: rgba(109, 79, 176, 0.5); }
 .select .ic { width: 16px; height: 16px; color: var(--p3); }
@@ -390,8 +395,17 @@ button.avatar:hover { transform: scale(1.05); }
 .q-text { width: 100%; background: rgba(255, 255, 255, 0.03); border: 1px solid transparent; border-radius: 12px; outline: none; resize: none; font-size: 15px; font-weight: 600; padding: 11px 14px; transition: border-color 0.2s, background 0.2s; }
 .q-text:focus { border-color: rgba(109, 79, 176, 0.5); background: rgba(0, 0, 0, 0.3); }
 .q-text::placeholder { color: var(--dim); font-weight: 500; }
+/* Encabezado de la pregunta activa: número + enunciado en una sola línea, como en el mockup */
+.q-head-inline { display: flex; align-items: center; gap: 14px; }
+.q-head-inline .q-text {
+  flex: 1; background: none; border: 1px solid transparent; border-radius: 10px; font-size: 16px; font-weight: 600; padding: 6px 8px;
+}
+.q-head-inline .q-text:focus { background: rgba(255, 255, 255, 0.04); border-color: rgba(109, 79, 176, 0.4); }
 .q-body { margin-top: 14px; }
-.opts { display: grid; gap: 8px; }
+.opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.opt-add { justify-content: center; gap: 8px; border-style: dashed; border-color: var(--border-2); background: none; color: var(--muted); font-weight: 600; font-size: 13.5px; cursor: pointer; animation: none; }
+.opt-add:hover { border-color: rgba(109, 79, 176, 0.55); color: #e9d5ff; background: rgba(109, 79, 176, 0.06); }
+.opt-add .ic { width: 15px; height: 15px; }
 .opt {
   display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.03); transition: background 0.2s, border-color 0.2s; animation: aparecer 0.3s var(--ease);
