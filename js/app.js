@@ -546,12 +546,12 @@
         </section>
         <section id="plantillas">
           <div class="section-head"><h2>Empieza con una plantilla</h2></div>
-          <div class="tpl-grid">
-            <button type="button" class="tpl-tile tpl-blanco" data-crear="formulario"><span class="tpl-plus">${ic('plus')}</span>En blanco</button>
-            <button type="button" class="tpl-tile tpl-examen" data-crear="examen">${ic('award')}<strong>Examen rápido</strong></button>
-            <button type="button" class="tpl-tile tpl-cuestionario" data-crear="cuestionario">${ic('list')}<strong>Quiz con imágenes</strong></button>
-            <button type="button" class="tpl-tile tpl-encuesta" data-crear="encuesta">${ic('chart')}<strong>Encuesta de satisfacción</strong></button>
-            <button type="button" class="tpl-tile tpl-pasos" data-crear="pasos">${ic('list')}<strong>Evaluación paso a paso</strong></button>
+          <div class="qtpl-grid">
+            <button type="button" class="qtpl-tile qtpl-blanco" data-crear="formulario"><span class="qtpl-plus">${ic('plus')}</span>En blanco</button>
+            <button type="button" class="qtpl-tile qtpl-examen" data-crear="examen">${ic('award')}<strong>Examen rápido</strong></button>
+            <button type="button" class="qtpl-tile qtpl-cuestionario" data-crear="cuestionario">${ic('list')}<strong>Quiz con imágenes</strong></button>
+            <button type="button" class="qtpl-tile qtpl-encuesta" data-crear="encuesta">${ic('chart')}<strong>Encuesta de satisfacción</strong></button>
+            <button type="button" class="qtpl-tile qtpl-pasos" data-crear="pasos">${ic('list')}<strong>Evaluación paso a paso</strong></button>
           </div>
         </section>
         <section id="misformularios">
@@ -815,7 +815,7 @@
           <button class="btn btn-primary" id="btnCompartir">${ic('share')}<span>Compartir</span></button>
         </div>
       </header>
-      <main class="container narrow editor ${tab === 'diseno' || tab === 'preguntas' ? 'wide' : ''}" id="editorBody"></main>`;
+      <main class="editor ${tab === 'preguntas' || tab === 'diseno' ? 'full' : 'container narrow'}" id="editorBody"></main>`;
 
     $('#btnCompartir').addEventListener('click', async () => {
       await guardarSiHayCambios();
@@ -1162,7 +1162,7 @@
     const scroll = window.scrollY;
     cuerpo.innerHTML = `
       <div class="q-layout">
-      <div class="q-main">
+      <div class="q-main"><div class="q-main-inner">
       <section class="q-card header-card con-tema" id="headerCard">
         <div class="hc-tamanos" role="group" aria-label="Tamaño del texto del encabezado">
           ${[['tamTitulo', 'Título'], ['tamDescripcion', 'Descripción']].map(([k, n]) => `
@@ -1194,7 +1194,7 @@
           ${gruposTipos().map(([g, tipos]) => `<p class="type-group">${g}</p>${tipos.map(([k, t]) => `<button type="button" class="type-opt" data-qa="agregar" data-tipo="${k}"><span class="tipo-ic">${ic(t.icono)}</span><span class="tipo-txt"><strong>${t.nombre}</strong><small>${DESC_TIPOS[k] || ''}</small></span></button>`).join('')}`).join('')}
         </div>
       </div>
-      </div>
+      </div></div>
       <aside class="q-preview" aria-label="Vista previa en vivo">
         <p class="q-preview-label">Vista en vivo</p>
         <div class="q-phone">
