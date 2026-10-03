@@ -751,7 +751,7 @@
         if (!ed.sucio && E === ed) {
           setEstado('Guardado', 'ok');
           const ifr = $('#livePreview');
-          if (ifr && ed.tab === 'preguntas') ifr.src = `${ligaPublica(ed.form.id)}?preview=1&_=${Date.now()}`;
+          if (ifr && ed.tab === 'preguntas') ifr.src = `${urlMini()}&_=${Date.now()}`;
         }
       })
       .catch((err) => {
@@ -808,11 +808,10 @@
           </div>
         </div>
         <nav class="tabs">
-          ${tabs.map(([k, i, n]) => `<a href="#/editar/${esc(f.id)}/${k}" class="tab ${k === tab ? 'active' : ''}">${ic(i)}<span>${n}</span></a>`).join('')}
+          ${tabs.map(([k, , n]) => `<a href="#/editar/${esc(f.id)}/${k}" class="tab ${k === tab ? 'active' : ''}">${n}</a>`).join('')}
         </nav>
         <div class="eb-actions">
-          <a class="btn btn-ghost" href="${esc(ligaPublica(f.id))}?preview=1" target="_blank" rel="noopener" id="btnPreview">${ic('eye')}<span>Vista previa</span></a>
-          <button class="btn btn-primary" id="btnCompartir">${ic('share')}<span>Compartir</span></button>
+          <button class="btn btn-primary eb-share" id="btnCompartir">Compartir</button>
         </div>
       </header>
       <main class="editor ${tab === 'preguntas' || tab === 'diseno' ? 'full' : 'container narrow'}" id="editorBody"></main>`;
@@ -830,7 +829,6 @@
         guardar();
       });
     });
-    $('#btnPreview').addEventListener('click', () => guardarSiHayCambios());
 
     const cuerpo = $('#editorBody');
     avisoVersionEditor();
@@ -995,8 +993,8 @@
       const i = orden.indexOf(d[k] || 'normal') + Number(b.dataset.d);
       if (i < 0 || i >= orden.length) return;
       d[k] = orden[i];
-      aplicarTemaEncabezado();
       programarGuardado();
+      if (E.tab === 'diseno') pintarDiseno();
       return;
     } else if (accion === 'abrirTipos') {
       e.stopPropagation();
@@ -1091,10 +1089,9 @@
           <div class="opt ${ok ? 'is-correct' : ''}" data-oid="${esc(o.id)}">
             <button type="button" class="mark ${p.tipo === 'multiple' ? 'sq' : ''} ${examen ? '' : 'off'}" data-qa="correcta" title="${examen ? 'Marcar como correcta' : ''}" ${examen ? '' : 'tabindex="-1"'}>${ic('check')}</button>
             <input class="opt-input" data-o="texto" value="${esc(o.texto)}" ${p.tipo === 'vf' ? 'readonly' : ''} placeholder="Opción">
-            ${ok ? '<span class="chip chip-ok">Correcta</span>' : ''}
-            ${p.tipo !== 'vf' && p.opciones.length > 1 ? `<button type="button" class="icon-btn sm" data-qa="quitarOpcion" aria-label="Quitar opción">${ic('x')}</button>` : ''}
+            ${p.tipo !== 'vf' && p.opciones.length > 1 ? `<button type="button" class="opt-x" data-qa="quitarOpcion" aria-label="Quitar opción">${ic('x')}</button>` : ''}
           </div>`;
-      }).join('')}${p.tipo !== 'vf' ? `<button type="button" class="opt opt-add" data-qa="agregarOpcion">${ic('plus')} Opción</button>` : ''}</div>`;
+      }).join('')}${p.tipo !== 'vf' ? '<button type="button" class="opt opt-add" data-qa="agregarOpcion">+ Opción</button>' : ''}</div>`;
     } else if (Tipos.es(p.tipo)) {
       cuerpo = Tipos.editor(p, examen);
     } else if (p.tipo === 'corta') {
@@ -1105,11 +1102,20 @@
       cuerpo = `<div class="fake-input tall">Respuesta larga del participante</div>
         ${examen ? '<p class="hint">Las preguntas de párrafo no se califican automáticamente.</p>' : ''}`;
     }
+    const texto = `<div class="q-text rt" contenteditable="true" data-q="texto" data-placeholder="${esc(PLACEHOLDER_TIPO[p.tipo] || 'Escribe la pregunta')}" aria-label="Enunciado de la pregunta">${textoRico(p.textoHtml, p.texto)}</div>`;
+    const orden = `<span class="q-orden">
+            <button type="button" data-qa="subir" ${i === 0 ? 'disabled' : ''} aria-label="Subir pregunta" title="Subir">${ic('up')}</button>
+            <button type="button" data-qa="bajar" ${i === total - 1 ? 'disabled' : ''} aria-label="Bajar pregunta" title="Bajar">${ic('down')}</button>
+          </span>`;
     return `
       <article class="q-card q-activa" data-qid="${esc(p.id)}" style="--i:${i}">
+        <div class="q-head-inline">
+          <span class="q-num">${i + 1}</span>
+          ${p.apoyo && p.apoyo.imagen ? '<span class="q-head-fill"></span>' : texto}
+          ${orden}
+        </div>
         ${p.apoyo && p.apoyo.imagen ? `
-          <div class="q-top-mini"><span class="q-num">${i + 1}</span></div>
-          <div class="q-enunciado ${p.apoyo.posicion === 'lado' ? 'lado' : 'arriba'}">
+          <div class="q-indent q-enunciado ${p.apoyo.posicion === 'lado' ? 'lado' : 'arriba'}">
             <figure class="apoyo-edit">
               <img src="${p.apoyo.imagen}" alt="Imagen de la pregunta">
               <figcaption>
@@ -1120,19 +1126,13 @@
                 <button type="button" class="icon-btn sm danger" data-qa="quitarApoyo" aria-label="Quitar imagen">${ic('trash')}</button>
               </figcaption>
             </figure>
-            <div class="q-text rt" contenteditable="true" data-q="texto" data-placeholder="${esc(PLACEHOLDER_TIPO[p.tipo] || 'Escribe la pregunta')}" aria-label="Enunciado de la pregunta">${textoRico(p.textoHtml, p.texto)}</div>
-          </div>` : `
-          <div class="q-head-inline">
-            <span class="q-num">${i + 1}</span>
-            <div class="q-text rt" contenteditable="true" data-q="texto" data-placeholder="${esc(PLACEHOLDER_TIPO[p.tipo] || 'Escribe la pregunta')}" aria-label="Enunciado de la pregunta">${textoRico(p.textoHtml, p.texto)}</div>
-          </div>`}
-        <div class="q-body">${cuerpo}</div>
-        <div class="q-aviso-row"><span class="q-aviso">${avisoPregunta(p)}</span></div>
-        <div class="q-toolbar" role="toolbar" aria-label="Herramientas de la pregunta">
+            ${texto}
+          </div>` : ''}
+        <div class="q-body q-indent">${cuerpo}</div>
+        <div class="q-aviso-row q-indent"><span class="q-aviso">${avisoPregunta(p)}</span></div>
+        <div class="q-toolbar q-indent" role="toolbar" aria-label="Herramientas de la pregunta">
           <div class="tipo-picker">
-            <button type="button" class="tipo-btn" data-qa="abrirTipos" aria-haspopup="true">
-              <span class="tipo-ic">${ic(TIPOS[p.tipo].icono)}</span><span>${TIPOS[p.tipo].nombre}</span>${ic('down', 'chev')}
-            </button>
+            <button type="button" class="tipo-btn" data-qa="abrirTipos" aria-haspopup="true">${TIPOS[p.tipo].nombre} ▾</button>
             <div class="tipo-pop" role="menu">
               ${gruposTipos().map(([g, tipos]) => `
                 <p class="type-group">${g}</p>
@@ -1145,14 +1145,17 @@
           ${examen && p.tipo !== 'parrafo' ? `<label class="pts"><input type="number" min="0" step="1" data-q="puntos" value="${Number(p.puntos) || 0}" aria-label="Puntos"><span>pts</span></label>` : ''}
           <label class="switch sm" title="Obligatoria"><input type="checkbox" data-q="obligatoria" ${p.obligatoria ? 'checked' : ''}><span class="sw"></span><span class="sw-label">Obligatoria</span></label>
           <span class="tb-sep"></span>
-          <label class="btn btn-ghost btn-sm apoyo-btn" title="Agregar una imagen a esta pregunta">${ic('image')}<span>${p.apoyo && p.apoyo.imagen ? 'Cambiar imagen' : 'Imagen'}</span>
-            <input type="file" accept="image/*" data-q="apoyoArchivo" hidden></label>
-          <button type="button" class="icon-btn sm" data-qa="subir" ${i === 0 ? 'disabled' : ''} aria-label="Subir">${ic('up')}</button>
-          <button type="button" class="icon-btn sm" data-qa="bajar" ${i === total - 1 ? 'disabled' : ''} aria-label="Bajar">${ic('down')}</button>
-          <button type="button" class="tb-item" data-qa="duplicar">${ic('copy')}<span>Duplicar</span></button>
-          <button type="button" class="tb-item danger" data-qa="eliminar">${ic('trash')}<span>Eliminar</span></button>
+          <label class="apoyo-btn" title="Agregar una imagen a esta pregunta">${p.apoyo && p.apoyo.imagen ? 'Cambiar imagen' : 'Imagen'}<input type="file" accept="image/*" data-q="apoyoArchivo" hidden></label>
+          <button type="button" class="tb-item" data-qa="duplicar">Duplicar</button>
+          <button type="button" class="tb-item danger" data-qa="eliminar">Eliminar</button>
         </div>
       </article>`;
+  }
+
+  const urlMini = () => `${ligaPublica(E.form.id)}?preview=1&mini=1&q=${encodeURIComponent(preguntaActiva || '')}`;
+  function avisarPreview() {
+    const ifr = $('#livePreview');
+    if (ifr && ifr.contentWindow) ifr.contentWindow.postMessage({ miniActiva: preguntaActiva }, location.origin);
   }
 
   function pintarPreguntas() {
@@ -1160,62 +1163,45 @@
     if (!f.preguntas.some((p) => p.id === preguntaActiva)) preguntaActiva = f.preguntas.length ? f.preguntas[0].id : null;
     const cuerpo = $('#editorBody');
     const scroll = window.scrollY;
-    cuerpo.innerHTML = `
-      <div class="q-layout">
-      <div class="q-main"><div class="q-main-inner">
-      <section class="q-card header-card con-tema" id="headerCard">
-        <div class="hc-tamanos" role="group" aria-label="Tamaño del texto del encabezado">
-          ${[['tamTitulo', 'Título'], ['tamDescripcion', 'Descripción']].map(([k, n]) => `
-            <span class="hc-tam" title="Tamaño de ${n.toLowerCase()}">
-              <small>${n}</small>
-              <button type="button" data-qa="tamEncabezado" data-k="${k}" data-d="-1" aria-label="${n} más chico">A−</button>
-              <button type="button" data-qa="tamEncabezado" data-k="${k}" data-d="1" aria-label="${n} más grande">A+</button>
-            </span>`).join('')}
-        </div>
+    if (!$('#livePreview', cuerpo)) {
+      cuerpo.innerHTML = `
+        <div class="q-layout">
+          <div class="q-main" id="qMain"></div>
+          <aside class="q-preview" aria-label="Vista previa en vivo">
+            <p class="q-preview-label">Vista en vivo</p>
+            <div class="q-phone"><iframe id="livePreview" title="Vista previa del formulario" src="${esc(urlMini())}"></iframe></div>
+            <a class="q-preview-link" id="abrirPreview" href="${esc(ligaPublica(f.id))}?preview=1" target="_blank" rel="noopener">Abrir vista previa completa ↗</a>
+          </aside>
+        </div>`;
+      $('#abrirPreview').addEventListener('click', () => guardarSiHayCambios());
+      $('#livePreview').addEventListener('load', avisarPreview);
+    }
+    $('#qMain').innerHTML = `
+      <section class="q-form-head">
         <input class="title-input" data-f="titulo" value="${esc(f.titulo)}" placeholder="Formulario sin título" aria-label="Título">
         <div class="desc-input rt" contenteditable="true" data-f="descripcion" data-placeholder="Agrega una descripción (opcional)" aria-label="Descripción">${textoRico(f.descripcionHtml, f.descripcion)}</div>
-        <div class="header-meta">
-          <span class="chip ${f.config.esExamen ? 'chip-accent' : ''}">${ic(f.config.esExamen ? 'award' : 'form')} ${f.config.esExamen ? 'Examen' : 'Formulario'}</span>
-          <span class="chip">${ic('list')} ${f.preguntas.length} pregunta${f.preguntas.length === 1 ? '' : 's'}</span>
-          ${f.config.esExamen ? `<span class="chip">${ic('target')} <span id="totalPts">${totalPuntos()} pts</span></span>` : ''}
-        </div>
       </section>
       <div class="q-list">
         ${f.preguntas.length ? f.preguntas.map((p, i) => p.id === preguntaActiva ? tarjetaPregunta(p, i, f.preguntas.length) : filaPregunta(p, i)).join('') : `<div class="empty small"><p class="muted">Este formulario no tiene preguntas todavía.</p></div>`}
       </div>
       <div class="add-q">
-        <button type="button" class="add-q-tile" data-qa="agregar" data-tipo="unica">${ic('plus')} Única</button>
-        <button type="button" class="add-q-tile" data-qa="agregar" data-tipo="multiple">${ic('plus')} Múltiple</button>
-        <button type="button" class="add-q-tile" data-qa="agregar" data-tipo="vf">${ic('plus')} V/F</button>
-        <button type="button" class="add-q-tile" data-qa="agregar" data-tipo="corta">${ic('plus')} Texto</button>
-        <button type="button" class="add-q-tile" data-qa="agregar" data-tipo="puntoImagen">${ic('plus')} Imagen</button>
-        <button type="button" class="add-q-tile" data-qa="menuTipos">${ic('plus')} Más</button>
+        <button type="button" class="add-q-tile" data-qa="agregar" data-tipo="unica">+ Única</button>
+        <button type="button" class="add-q-tile" data-qa="agregar" data-tipo="multiple">+ Múltiple</button>
+        <button type="button" class="add-q-tile" data-qa="agregar" data-tipo="vf">+ V / F</button>
+        <button type="button" class="add-q-tile" data-qa="agregar" data-tipo="corta">+ Texto</button>
+        <button type="button" class="add-q-tile" data-qa="agregar" data-tipo="puntoImagen">+ Imagen</button>
+        <button type="button" class="add-q-tile" data-qa="menuTipos">+ Más</button>
         <div class="type-menu" id="tipoMenu">
           ${gruposTipos().map(([g, tipos]) => `<p class="type-group">${g}</p>${tipos.map(([k, t]) => `<button type="button" class="type-opt" data-qa="agregar" data-tipo="${k}"><span class="tipo-ic">${ic(t.icono)}</span><span class="tipo-txt"><strong>${t.nombre}</strong><small>${DESC_TIPOS[k] || ''}</small></span></button>`).join('')}`).join('')}
         </div>
-      </div>
-      </div></div>
-      <aside class="q-preview" aria-label="Vista previa en vivo">
-        <p class="q-preview-label">Vista en vivo</p>
-        <div class="q-phone">
-          <iframe id="livePreview" title="Vista previa del formulario" src="${esc(ligaPublica(f.id))}?preview=1"></iframe>
-        </div>
-      </aside>
       </div>`;
     $$('textarea', cuerpo).forEach(autoAltura);
-    aplicarTemaEncabezado();
     barraFormato.classList.remove('show');
+    avisarPreview();
     window.scrollTo(0, scroll);
   }
 
-  // El encabezado del editor se ve como el de la página pública (plantilla, imagen, fuente y tamaños).
-  function aplicarTemaEncabezado() {
-    const hc = $('#headerCard');
-    if (!hc) return;
-    const v = Diseno.variables(E.form.diseno);
-    ['--hero', '--font', '--tt', '--td', '--grad'].forEach((k) => hc.style.setProperty(k, v[k]));
-    Diseno.cargarFuentes([Diseno.normalizar(E.form.diseno).fuente]);
-  }
+
 
   // El aviso vive fuera de #editorBody para que no lo borre el cambio de pestaña.
   function avisoVersionEditor() {
@@ -1226,15 +1212,14 @@
     avisoVersion().then(() => { if (!host.children.length) host.remove(); });
   }
 
-  // ---------- Diseño ----------
+  // ---------- Diseño (mockup A · Estudio: opciones en una barra lateral, vista previa grande a la derecha) ----------
   function miniComposicion(k) {
-    const cards = (n) => '<i class="c-card"></i>'.repeat(n);
     switch (k) {
-      case 'portada': return `<i class="c-hero big"></i><span class="c-col">${cards(2)}</span>`;
-      case 'lateral': return `<span class="c-row"><i class="c-hero side"></i><span class="c-col">${cards(3)}</span></span>`;
-      case 'pasos': return `<i class="c-bar"></i><i class="c-card solo"></i><span class="c-dots"><i></i><i></i><i></i></span>`;
-      case 'minimal': return `<i class="c-title"></i><i class="c-line"></i><i class="c-line"></i><i class="c-line"></i>`;
-      default: return `<i class="c-hero"></i><span class="c-col">${cards(3)}</span>`;
+      case 'portada': return '<i class="mc-hero tall"></i><i class="mc-line in"></i>';
+      case 'lateral': return '<span class="mc-row"><i class="mc-side"></i><span class="mc-col"><i class="mc-block"></i><i class="mc-block"></i></span></span>';
+      case 'pasos': return '<i class="mc-progress"></i><i class="mc-solo"></i>';
+      case 'minimal': return '<i class="mc-title"></i><i class="mc-rule"></i><i class="mc-rule"></i>';
+      default: return '<i class="mc-hero"></i><i class="mc-line"></i><i class="mc-line"></i>';
     }
   }
 
@@ -1243,101 +1228,107 @@
     const d = f.diseno;
     const sel = (k, v) => (d[k] === v ? 'sel' : '');
     Diseno.cargarFuentes(Diseno.FUENTES.map((x) => x.nombre));
+    const vista = E.vistaDiseno || 'pc';
     const primera = f.preguntas[0];
+    const opciones = primera && primera.opciones && primera.opciones.length >= 2 ? primera.opciones.slice(0, 2).map((o) => o.texto) : ['Opción seleccionada', 'Otra opción'];
+    const tamanos = Object.keys(Diseno.TAMANOS);
+    const tamTxt = (k, n) => `
+      <span class="hc-tam" title="Tamaño de ${n.toLowerCase()}">
+        <small>${n}</small>
+        <button type="button" data-qa="tamEncabezado" data-k="${k}" data-d="-1" aria-label="${n} más chico">A−</button>
+        <button type="button" data-qa="tamEncabezado" data-k="${k}" data-d="1" aria-label="${n} más grande">A+</button>
+      </span>`;
     $('#editorBody').innerHTML = `
       <div class="design-layout" id="disenoRoot">
-        <div class="design-controls">
-          <section class="panel">
-            <h3>${ic('layers')} Composición</h3>
-            <div class="comp-grid">
+        <aside class="dz-side">
+          <section class="dz-sec">
+            <span class="dz-label">1 · Composición</span>
+            <div class="dz-comp">
               ${Object.entries(Diseno.COMPOSICIONES).map(([k, c]) => `
-                <button type="button" class="comp-opt ${sel('composicion', k)}" data-d="composicion" data-v="${k}" title="${c.desc}">
-                  <span class="cmini cmini-${k}" aria-hidden="true">${miniComposicion(k)}</span>
-                  <strong>${c.nombre}</strong>
-                </button>`).join('')}
-            </div>
-            <p class="comp-desc">${ic('check')} ${Diseno.COMPOSICIONES[d.composicion].nombre}: ${Diseno.COMPOSICIONES[d.composicion].desc.toLowerCase()}.</p>
-          </section>
-          <section class="panel">
-            <h3>${ic('palette')} Plantillas</h3>
-            <p class="hint">Elige el estilo de la página que verán tus participantes.</p>
-            <div class="tpl-grid">
-              ${Object.entries(Diseno.PLANTILLAS).map(([k, t]) => `
-                <button type="button" class="tpl ${sel('plantilla', k)}" data-d="plantilla" data-v="${k}" style="--tbg:${t.fondo};--tcard:${t.card};--thero:${t.hero};--ta:linear-gradient(135deg, ${t.a1}, ${t.a2});--tline:${t.modo === 'claro' ? 'rgba(28,21,48,.18)' : 'rgba(255,255,255,.2)'};--tname:${t.modo === 'claro' ? '#1c1530' : '#fff'}">
-                  <span class="tpl-hero"></span>
-                  <span class="tpl-body"><span class="tpl-line"></span><span class="tpl-line short"></span><span class="tpl-btn"></span></span>
-                  <span class="tpl-name">${t.nombre}${t.modo === 'claro' ? ' <small>claro</small>' : ''}</span>
-                  <span class="tpl-check">${ic('check')}</span>
+                <button type="button" class="dz-comp-opt ${sel('composicion', k)}" data-d="composicion" data-v="${k}">
+                  <span class="mc mc-${k}" aria-hidden="true">${miniComposicion(k)}</span>
+                  <span class="dz-comp-txt"><strong>${c.nombre}</strong><small>${c.desc}</small></span>
                 </button>`).join('')}
             </div>
           </section>
-          <section class="panel">
-            <h3>${ic('font')} Tipo de letra</h3>
-            <div class="font-grid">
-              ${Diseno.FUENTES.map((x) => `
-                <button type="button" class="font-opt ${sel('fuente', x.nombre)}" data-d="fuente" data-v="${esc(x.nombre)}">
-                  <strong style="font-family:'${x.nombre}'">Aa</strong><span>${esc(x.nombre)}</span><small>${esc(x.estilo)}</small>
-                </button>`).join('')}
+          <section class="dz-sec">
+            <span class="dz-label">2 · Plantilla</span>
+            <div class="dz-swatches">
+              ${Object.entries(Diseno.PLANTILLAS).map(([k, t]) => `<button type="button" class="dz-tpl ${sel('plantilla', k)}" data-d="plantilla" data-v="${k}" title="${t.nombre}${t.modo === 'claro' ? ' (claro)' : ''}" aria-label="Plantilla ${t.nombre}" style="--tpl:${t.hero}"></button>`).join('')}
             </div>
           </section>
-          <section class="panel">
-            <h3>${ic('size')} Tamaño de letra</h3>
-            <div class="size-seg">
-              ${Object.entries(Diseno.TAMANOS).map(([k, t]) => `
-                <button type="button" class="${sel('tamano', k)}" data-d="tamano" data-v="${k}"><span style="font-size:${t.px + 3}px">Aa</span>${t.nombre}</button>`).join('')}
+          <section class="dz-sec">
+            <span class="dz-label">3 · Tipografía</span>
+            <div class="dz-fonts">
+              ${Diseno.FUENTES.map((x) => `<button type="button" class="dz-font ${sel('fuente', x.nombre)}" data-d="fuente" data-v="${esc(x.nombre)}" title="${esc(x.nombre)} · ${esc(x.estilo)}" style="font-family:'${x.nombre}'">Aa</button>`).join('')}
             </div>
+            <label class="dz-size" title="Tamaño de letra: ${Diseno.TAMANOS[d.tamano].nombre}">
+              <span>A</span><input type="range" id="dzTamano" min="0" max="${tamanos.length - 1}" step="1" value="${Math.max(0, tamanos.indexOf(d.tamano))}" aria-label="Tamaño de letra"><span class="big">A</span>
+            </label>
           </section>
-          <section class="panel">
-            <h3>${ic('sparkles')} Color de acento</h3>
-            <div class="swatches">
-              <button type="button" class="swatch auto ${d.acento ? '' : 'sel'}" data-d="acento" data-v="" title="Color de la plantilla">Auto</button>
-              ${Diseno.ACENTOS.map((c) => `<button type="button" class="swatch ${sel('acento', c)}" data-d="acento" data-v="${c}" style="--sw:${c}" aria-label="Color ${c}"></button>`).join('')}
-              <label class="swatch custom ${d.acento && !Diseno.ACENTOS.includes(d.acento) ? 'sel' : ''}" title="Color personalizado" style="--sw:${d.acento || '#a855f7'}">
-                <input type="color" id="colorLibre" value="${d.acento || '#a855f7'}">${ic('plus')}
+          <section class="dz-sec">
+            <span class="dz-label">4 · Portada y color</span>
+            <label class="dz-cover" style="--cover:${d.encabezado ? `linear-gradient(rgba(0,0,0,.35), rgba(0,0,0,.35)), url('${d.encabezado}') center / cover` : Diseno.PLANTILLAS[d.plantilla].hero}">
+              ${d.encabezado ? 'Cambiar imagen de portada' : 'Subir imagen de portada'}
+              <input type="file" accept="image/*" id="imgEncabezado" hidden>
+            </label>
+            ${d.encabezado ? '<button type="button" class="dz-quitar" data-d="encabezado" data-v="">Quitar imagen de portada</button>' : ''}
+            <div class="dz-colors">
+              <button type="button" class="dz-color auto ${d.acento ? '' : 'sel'}" data-d="acento" data-v="" title="Color de la plantilla">Auto</button>
+              ${Diseno.ACENTOS.map((c) => `<button type="button" class="dz-color ${sel('acento', c)}" data-d="acento" data-v="${c}" style="--sw:${c}" aria-label="Color ${c}"></button>`).join('')}
+              <label class="dz-color custom ${d.acento && !Diseno.ACENTOS.includes(d.acento) ? 'sel' : ''}" title="Color personalizado" style="--sw:${d.acento || '#a855f7'}">
+                <input type="color" id="colorLibre" value="${d.acento || '#a855f7'}">+
               </label>
             </div>
           </section>
-          <section class="panel">
-            <h3>${ic('image')} Imagen de encabezado</h3>
-            <p class="hint">Se muestra detrás del título, como en Microsoft Forms.</p>
-            <div class="img-upload">
-              <label class="btn btn-ghost btn-sm">${ic('image')} ${d.encabezado ? 'Cambiar imagen' : 'Subir imagen'}<input type="file" accept="image/*" id="imgEncabezado" hidden></label>
-              ${d.encabezado ? `<button type="button" class="link-btn danger" data-d="encabezado" data-v="">${ic('trash')} Quitar</button>` : ''}
-            </div>
-          </section>
-        </div>
-        <aside class="design-preview">
-          <p class="eyebrow">Vista previa</p>
-          <div class="public tema-preview" id="temaPreview">
-            ${d.composicion === 'pasos' ? '<div class="pasos-top"><span>Paso 1 de ' + Math.max(1, f.preguntas.length) + '</span><div class="paso-track"><span style="width:' + (100 / Math.max(1, f.preguntas.length)) + '%"></span></div></div>' : ''}
-            <section class="pf-hero">
-              <h1>${esc(f.titulo || 'Formulario')}</h1>
-              ${f.descripcion ? `<p>${esc(f.descripcion)}</p>` : ''}
-              <div class="pf-meta"><span class="chip chip-glass">${ic('list')} ${f.preguntas.length} preguntas</span></div>
-            </section>
-            <section class="q-card public-q">
-              <div class="pq-head"><span class="q-num">1</span><h3>${esc((primera && primera.texto) || '¿Cuál es la respuesta correcta?')}<span class="req">*</span></h3></div>
-              <div class="choices">
-                <label class="choice"><input type="radio" name="demo" checked><span class="ind radio">${ic('check')}</span><span>Opción seleccionada</span></label>
-                <label class="choice"><input type="radio" name="demo"><span class="ind radio">${ic('check')}</span><span>Otra opción</span></label>
-              </div>
-            </section>
-            <div class="pf-actions"><span class="btn btn-primary">Enviar respuestas</span></div>
-          </div>
-          <a class="btn btn-ghost btn-block" href="${esc(ligaPublica(f.id))}?preview=1" target="_blank" rel="noopener">${ic('eye')} Abrir vista previa completa</a>
         </aside>
+        <main class="dz-main">
+          <div class="dz-toggle" role="group" aria-label="Tamaño de la vista previa">
+            <button type="button" class="${vista === 'pc' ? 'sel' : ''}" data-vista="pc">Computadora</button>
+            <button type="button" class="${vista === 'cel' ? 'sel' : ''}" data-vista="cel">Celular</button>
+          </div>
+          <div class="dz-frame ${vista}">
+            <div class="dz-chrome"><i></i><i></i><i></i></div>
+            <div class="public tema-preview" id="temaPreview">
+              ${d.composicion === 'pasos' ? '<div class="pasos-top"><span>Paso 1 de ' + Math.max(1, f.preguntas.length) + '</span><div class="paso-track"><span style="width:' + (100 / Math.max(1, f.preguntas.length)) + '%"></span></div></div>' : ''}
+              <section class="pf-hero">
+                <div class="hc-tamanos" role="group" aria-label="Tamaño del texto del encabezado">${tamTxt('tamTitulo', 'Título')}${tamTxt('tamDescripcion', 'Descripción')}</div>
+                <h1>${esc(f.titulo || 'Formulario')}</h1>
+                ${f.descripcion ? `<p>${esc(f.descripcion)}</p>` : ''}
+              </section>
+              <section class="q-card public-q">
+                <div class="pq-head"><span class="q-num">1</span><h3>${esc((primera && primera.texto) || '¿Cuál es la respuesta correcta?')}<span class="req">*</span></h3></div>
+                <div class="choices">
+                  <label class="choice"><input type="radio" name="demo" checked><span class="ind radio">${ic('check')}</span><span>${esc(opciones[0])}</span></label>
+                  <label class="choice"><input type="radio" name="demo"><span class="ind radio">${ic('check')}</span><span>${esc(opciones[1])}</span></label>
+                </div>
+              </section>
+              <div class="pf-actions"><span class="btn btn-primary">Enviar respuestas</span></div>
+            </div>
+          </div>
+          <a class="q-preview-link" href="${esc(ligaPublica(f.id))}?preview=1" target="_blank" rel="noopener">Abrir vista previa completa ↗</a>
+        </main>
       </div>`;
     const prev = $('#temaPreview');
     Diseno.aplicar(prev, d);
     const root = $('#disenoRoot');
     root.addEventListener('click', (e) => {
+      const v = e.target.closest('[data-vista]');
+      if (v) {
+        E.vistaDiseno = v.dataset.vista;
+        pintarDiseno();
+        return;
+      }
       const b = e.target.closest('[data-d]');
-      if (!b) return;
+      if (!b || b.dataset.qa) return;
       d[b.dataset.d] = b.dataset.v;
       if (b.dataset.d === 'encabezado' && !b.dataset.v) d.miniatura = '';
       programarGuardado();
       pintarDiseno();
     });
+    const rango = $('#dzTamano');
+    rango.addEventListener('input', () => { d.tamano = tamanos[rango.value]; Diseno.aplicar(prev, d); });
+    rango.addEventListener('change', () => { d.tamano = tamanos[rango.value]; programarGuardado(); pintarDiseno(); });
     const color = $('#colorLibre');
     color.addEventListener('input', () => { d.acento = color.value; Diseno.aplicar(prev, d); });
     color.addEventListener('change', () => { d.acento = color.value; programarGuardado(); pintarDiseno(); });
@@ -1650,6 +1641,7 @@
         ${hayObligatorias ? '<p class="req-note"><span class="req">*</span> Obligatorio</p>' : ''}
       </section>
       <div class="pf-main">
+      <div class="mini-progress"><span></span></div>
       ${enPasos ? '<div class="pasos-top"><span id="pasoTexto"></span><div class="paso-track"><span id="pasoBarra"></span></div></div>' : ''}
       <form id="pf" novalidate>
         ${form.config.pedirNombre || form.config.pedirCorreo ? `
@@ -1756,15 +1748,32 @@
   }
 
   function pintarPublico(html, preview, diseno) {
+    const mini = preview && ruta().params.get('mini') === '1';
     app.innerHTML = `
-      <div class="public">
-        <header class="public-bar">${logo()}</header>
-        ${preview ? `<div class="preview-banner">${ic('eye')} Vista previa · las respuestas no se guardan</div>` : ''}
+      <div class="public ${mini ? 'mini' : ''}">
+        ${mini ? '' : `<header class="public-bar">${logo()}</header>`}
+        ${preview && !mini ? `<div class="preview-banner">${ic('eye')} Vista previa · las respuestas no se guardan</div>` : ''}
         <main class="container narrow">${html}</main>
       </div>`;
     Diseno.aplicar($('.public'), diseno);
+    if (mini) miniActiva(miniId || ruta().params.get('q'));
     window.scrollTo(0, 0);
   }
+
+  // Vista previa en miniatura (panel "Vista en vivo" del editor): muestra solo el encabezado y la pregunta activa.
+  let miniId = null;
+  function miniActiva(id) {
+    if (id) miniId = id;
+    const tarjetas = $$('.public.mini .public-q:not([data-pid="__datos"])');
+    if (!tarjetas.length) return;
+    const i = Math.max(0, tarjetas.findIndex((t) => t.dataset.pid === id));
+    tarjetas.forEach((t, k) => t.classList.toggle('mini-on', k === i));
+    const barra = $('.public.mini .mini-progress span');
+    if (barra) barra.style.width = `${((i + 1) / tarjetas.length) * 100}%`;
+  }
+  window.addEventListener('message', (e) => {
+    if (e.origin === location.origin && e.data && 'miniActiva' in e.data) miniActiva(e.data.miniActiva);
+  });
 
   // Página a la que llega quien confirma su correo.
   function vistaConfirmado(error) {
