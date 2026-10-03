@@ -166,7 +166,7 @@
   function topbar(conCrear = false) {
     const u = Sesion.usuario() || {};
     return `
-      <header class="topbar">
+      <header class="topbar ${conCrear ? 'topbar-inicio' : ''}">
         <a href="#/formularios" class="brand-link">${logo()}</a>
         ${conCrear ? `<nav class="topbar-nav" aria-label="Principal">
           <a href="#/formularios" class="active">Inicio</a>
@@ -174,7 +174,7 @@
           <button type="button" data-ir="misformularios">Resultados</button>
         </nav>` : ''}
         <div class="topbar-right">
-          ${conCrear ? `<button type="button" class="btn btn-primary btn-sm" data-crear="formulario">${ic('plus')} Crear</button>` : ''}
+          ${conCrear ? `<button type="button" class="btn btn-primary btn-sm" data-crear="formulario">+ Crear</button>` : ''}
           ${API.modoDemo ? '<span class="chip chip-demo" title="Configura Supabase en js/config.js">Modo demo</span>' : ''}
           <div class="user-menu">
             <button class="avatar" id="avatarBtn" aria-label="Cuenta">${esc(iniciales(u.nombre))}</button>
@@ -531,40 +531,38 @@
 
   async function vistaDashboard(id) {
     document.title = `Mis formularios · ${window.CONFIG.NOMBRE}`;
-    const u = Sesion.usuario();
     filtroForms = 'todos';
     app.innerHTML = `
       ${topbar(true)}
-      <main class="container">
+      <main class="inicio">
         <section class="hero-banner">
           <div class="hb-text">
-            <p class="eyebrow">Tu espacio</p>
-            <h1>Hola, <span class="grad-text">${esc(String(u.nombre).split(' ')[0])}</span>. Crea evaluaciones que se califican solas.</h1>
-            <p class="muted">Empieza con una plantilla o desde cero. La foca se encarga del resto.</p>
+            <h1>Crea evaluaciones que se califican solas.</h1>
+            <p>Empieza con una plantilla o desde cero. La foca se encarga del resto.</p>
           </div>
-          <div class="hb-mascota" aria-hidden="true"><img src="img/foca2.png" alt=""></div>
+          <div class="hb-mascota" aria-hidden="true"><img src="img/foca4.png" alt=""></div>
         </section>
-        <section id="plantillas">
-          <div class="section-head"><h2>Empieza con una plantilla</h2></div>
+        <section class="inicio-sec" id="plantillas">
+          <div class="inicio-head"><h2>Empieza con una plantilla</h2></div>
           <div class="qtpl-grid">
-            <button type="button" class="qtpl-tile qtpl-blanco" data-crear="formulario"><span class="qtpl-plus">${ic('plus')}</span>En blanco</button>
-            <button type="button" class="qtpl-tile qtpl-examen" data-crear="examen">${ic('award')}<strong>Examen rápido</strong></button>
-            <button type="button" class="qtpl-tile qtpl-cuestionario" data-crear="cuestionario">${ic('list')}<strong>Quiz con imágenes</strong></button>
-            <button type="button" class="qtpl-tile qtpl-encuesta" data-crear="encuesta">${ic('chart')}<strong>Encuesta de satisfacción</strong></button>
-            <button type="button" class="qtpl-tile qtpl-pasos" data-crear="pasos">${ic('list')}<strong>Evaluación paso a paso</strong></button>
+            <button type="button" class="qtpl-tile qtpl-blanco" data-crear="formulario"><span class="qtpl-plus">+</span>En blanco</button>
+            <button type="button" class="qtpl-tile qtpl-examen" data-crear="examen">Examen rápido</button>
+            <button type="button" class="qtpl-tile qtpl-cuestionario" data-crear="cuestionario">Quiz con imágenes</button>
+            <button type="button" class="qtpl-tile qtpl-encuesta" data-crear="encuesta">Encuesta de satisfacción</button>
+            <button type="button" class="qtpl-tile qtpl-pasos" data-crear="pasos">Evaluación paso a paso</button>
           </div>
         </section>
-        <section id="misformularios">
-          <div class="section-head">
-            <h2>Mis formularios</h2>
+        <section class="inicio-sec" id="misformularios">
+          <div class="inicio-head">
+            <h2>Tus formularios</h2>
+            <label class="search inicio-buscar" hidden>${ic('search')}<input id="buscar" placeholder="Buscar" autocomplete="off"></label>
             <div class="tabs-filtro" role="group" aria-label="Filtrar formularios">
               <button type="button" class="chip-filtro sel" data-filtro="todos">Todos</button>
               <button type="button" class="chip-filtro" data-filtro="abiertos">Abiertos</button>
-              <button type="button" class="chip-filtro" data-filtro="cerrados">Cerrados</button>
+              <button type="button" class="chip-filtro" data-filtro="borradores">Borradores</button>
             </div>
-            <label class="search">${ic('search')}<input id="buscar" placeholder="Buscar formularios" autocomplete="off"></label>
           </div>
-          <div class="forms-grid" id="formsGrid">${'<div class="form-card skeleton"></div>'.repeat(3)}</div>
+          <div class="forms-grid" id="formsGrid">${'<div class="form-card skeleton"></div>'.repeat(4)}</div>
         </section>
       </main>`;
     enlazarTopbar();
@@ -596,7 +594,9 @@
     const q = normalizarTexto($('#buscar').value);
     let lista = listaForms.filter((f) => !q || normalizarTexto(f.titulo).includes(q));
     if (filtroForms === 'abiertos') lista = lista.filter((f) => f.aceptaRespuestas);
-    if (filtroForms === 'cerrados') lista = lista.filter((f) => !f.aceptaRespuestas);
+    if (filtroForms === 'borradores') lista = lista.filter((f) => !f.numPreguntas);
+    const buscar = $('.inicio-buscar');
+    if (buscar) buscar.hidden = listaForms.length <= 8;
     if (!listaForms.length) {
       grid.innerHTML = `
         <div class="empty">
@@ -610,20 +610,22 @@
       grid.innerHTML = `<div class="empty"><p class="muted">No hay formularios que coincidan con la búsqueda o el filtro.</p></div>`;
       return;
     }
+    const meta = (f) => {
+      if (!f.numPreguntas) return '<span class="fc-borrador">Borrador</span>';
+      const r = `${f.numRespuestas} respuesta${f.numRespuestas === 1 ? '' : 's'}`;
+      return f.aceptaRespuestas ? r : `${r} · cerrada`;
+    };
     grid.innerHTML = lista.map((f, i) => `
       <article class="form-card" data-id="${esc(f.id)}" style="--i:${i}">
         <a class="fc-cover ${f.portada ? 'con-foto' : ''}" href="#/editar/${esc(f.id)}" style="--cover:${esc(portadaDe(f))}">
-          ${f.portada ? '' : `<span class="fc-art">${ic(f.esExamen ? 'award' : 'form')}</span>`}
-          <span class="chip chip-glass">${f.esExamen ? 'Examen' : 'Formulario'}</span>
-          ${f.aceptaRespuestas ? '' : '<span class="chip chip-glass chip-closed">Cerrado</span>'}
+          ${f.esExamen ? '<span class="fc-chip">Examen</span>' : ''}
         </a>
         <div class="fc-body">
           <a href="#/editar/${esc(f.id)}" class="fc-title">${esc(f.titulo || 'Sin título')}</a>
-          <p class="fc-meta"><span>${ic('list')} ${f.numPreguntas} pregunta${f.numPreguntas === 1 ? '' : 's'}</span><span>${ic('users')} ${f.numRespuestas} respuesta${f.numRespuestas === 1 ? '' : 's'}</span></p>
-          <p class="fc-date">${ic('clock')} Editado ${fechaRelativa(f.actualizado)}</p>
+          <p class="fc-meta">${meta(f)}</p>
         </div>
         <div class="fc-menu">
-          <button class="icon-btn" data-menu aria-label="Opciones">${ic('more')}</button>
+          <button class="icon-btn sm" data-menu aria-label="Opciones">${ic('more')}</button>
           <div class="menu">
             <a class="dropdown-item" href="#/editar/${esc(f.id)}">${ic('form')} Abrir</a>
             <a class="dropdown-item" href="#/editar/${esc(f.id)}/respuestas">${ic('chart')} Ver respuestas</a>

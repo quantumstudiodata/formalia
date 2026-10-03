@@ -1441,3 +1441,67 @@ input[type="range"] { flex: 1; max-width: 260px; accent-color: var(--p2); }
 .public.mini .choice { gap: 8px; padding: 10px 11px; border-radius: 10px; font-size: 12.5px; }
 .public.mini .ind { width: 13px; height: 13px; border-width: 1.5px; border-radius: 3px; }
 .public.mini .ind .ic { width: 9px; height: 9px; }
+
+/* Inicio con las medidas del mockup B · Lienzo (1440 px): a todo lo ancho, sin contenedor centrado */
+.topbar-inicio { height: 68px; padding: 0 40px; gap: 0; }
+.topbar-inicio .topbar-nav { margin-left: 28px; }
+.topbar-inicio [data-crear] { padding: 10px 18px; border-radius: 12px; font-size: 13.5px; }
+.topbar-inicio .avatar { width: 36px; height: 36px; font-size: 12px; }
+.inicio { padding: 26px 40px 60px; display: flex; flex-direction: column; gap: 26px; }
+.inicio .hero-banner {
+  position: relative; height: 210px; min-height: 0; margin: 0; padding: 0 44px; border: 0; border-radius: 26px; overflow: hidden;
+  display: flex; align-items: center; justify-content: flex-start;
+  background: radial-gradient(600px 300px at 80% 60%, rgba(236, 72, 153, 0.45), transparent 60%), linear-gradient(120deg, #1e1b4b, #4c1d95 50%, #86198f);
+}
+.inicio .hb-text { max-width: 560px; gap: 10px; }
+.inicio .hb-text h1 { font-size: 34px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; }
+.inicio .hb-text p { margin: 0; font-size: 15px; color: rgba(255, 255, 255, 0.82); }
+.inicio .hb-mascota {
+  position: absolute; right: 70px; bottom: -30px; width: 230px; height: 230px; border-radius: 50%; box-shadow: none;
+  background: radial-gradient(circle at 50% 40%, #f5f0ff, #c4b5fd 72%); display: flex; align-items: flex-end; justify-content: center; overflow: visible;
+}
+.inicio .hb-mascota img { width: 200px; margin-bottom: 26px; animation: none; mix-blend-mode: multiply; }
+.inicio-sec { display: flex; flex-direction: column; gap: 12px; }
+.inicio-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.inicio-head h2 { margin: 0 auto 0 0; font-size: 17px; }
+.inicio-buscar { width: 220px; }
+.inicio .tabs-filtro { gap: 6px; }
+.inicio .qtpl-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin: 0; }
+.inicio .qtpl-tile { height: 120px; padding: 14px; border: 0; border-radius: 18px; font-size: 13.5px; font-weight: 700; color: #fff; justify-content: flex-end; align-items: flex-start; }
+.inicio .qtpl-blanco { align-items: center; justify-content: center; gap: 6px; border: 2px dashed rgba(109, 79, 176, 0.55); background: none; color: #e9d5ff; }
+.inicio .qtpl-plus { width: auto; height: auto; font-size: 26px; line-height: 1; }
+.inicio .qtpl-examen { background: linear-gradient(135deg, #7c2d12, #9d174d); }
+.inicio .qtpl-cuestionario { background: linear-gradient(135deg, #083344, #1e3a8a); }
+.inicio .qtpl-encuesta { background: linear-gradient(135deg, #022c22, #134e4a); }
+.inicio .qtpl-pasos { background: linear-gradient(135deg, #ede9fe, #f5d0fe); color: #3b0764; }
+.inicio .forms-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.inicio .form-card { border-radius: 20px; background: #110e1b; border: 1px solid rgba(255, 255, 255, 0.07); overflow: hidden; }
+.inicio .form-card:hover { transform: translateY(-2px); box-shadow: none; border-color: rgba(109, 79, 176, 0.45); }
+.inicio .fc-cover { height: 120px; padding: 12px; border-radius: 0; }
+.inicio .fc-cover::after { display: none; }
+.fc-chip { position: relative; z-index: 1; align-self: flex-start; padding: 4px 9px; border-radius: 99px; background: rgba(0, 0, 0, 0.35); font-size: 11px; font-weight: 700; color: #fff; }
+.inicio .fc-body { padding: 14px; display: flex; flex-direction: column; gap: 4px; }
+.inicio .fc-title { margin: 0; padding-right: 26px; font-size: 14px; }
+.inicio .fc-meta { font-size: 12px; color: #8f88a6; }
+.fc-borrador { color: var(--warn); }
+.inicio .fc-menu { top: 128px; right: 8px; opacity: 0; transition: opacity 0.15s; }
+.inicio .form-card:hover .fc-menu, .inicio .fc-menu:focus-within, .inicio .fc-menu:has(.menu.open) { opacity: 1; }
+.inicio .form-card.skeleton { height: 190px; }
+@media (max-width: 1100px) {
+  .inicio .qtpl-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .inicio .forms-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .topbar-inicio { padding: 0 16px; }
+  .topbar-inicio .topbar-nav { display: none; }
+  .topbar-inicio .chip-demo { display: none; }
+  .topbar-inicio [data-crear] { padding: 8px 14px; }
+  .inicio { padding: 20px 16px 40px; }
+  .inicio .hero-banner { height: auto; padding: 28px 22px 150px; align-items: flex-start; flex-direction: column; text-align: left; }
+  .inicio .hb-text h1 { font-size: 26px; }
+  .inicio .hb-mascota { width: 160px; height: 160px; right: 50%; transform: translateX(50%); bottom: -20px; }
+  .inicio .hb-mascota img { width: 140px; margin-bottom: 18px; }
+  .inicio .qtpl-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .inicio .forms-grid { grid-template-columns: 1fr; }
+  .inicio-head { flex-wrap: wrap; }
+}
